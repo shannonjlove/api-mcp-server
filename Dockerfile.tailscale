@@ -1,0 +1,31 @@
+FROM node:24-alpine
+
+# Install Tailscale
+RUN apk add --no-cache tailscale ca-certificates
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --prefer-offline --no-audit
+
+# Copy application
+COPY . .
+
+# Expose ports
+EXPOSE 3000 9090
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV TAILSCALE_ENABLED=true
+ENV BIND_ADDRESS=0.0.0.0
+ENV BIND_PORT=3000
+
+# Entrypoint script that handles Tailscale setup
+COPY docker-entrypoint.sh /
+RUN chmod +x /docker-entrypoint.sh
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["npm", "start"]
